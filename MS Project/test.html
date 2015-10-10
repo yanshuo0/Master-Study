@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <head>
+        <meta charset="utf-8">
+        <title>Math Warrior Main Page</title>
+        <meta name="description" content="This is the Main Page of the Multiple-Data Game">
+        <meta name="keywords" content="Data Importer, Space Invader, Maze Game">
+        <meta name="author" content="Shuo YAN">
+        <link rel="stylesheet" href="css/style.css">
+        <script>
+
+        // Simulate LocalStorage for browsers don't support WebStorage API
+            if (!window.localStorage) {
+  window.localStorage = {
+
+    getItem: function (sKey) {
+      if (!sKey || !this.hasOwnProperty(sKey)) { return null; }
+      return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+    },
+    key: function (nKeyId) { return unescape(document.cookie.replace(/\s*\=(?:.(?!;))*$/, "").split(/\s*\=(?:[^;](?!;))*[^;]?;\s*/)[nKeyId]); },
+
+    setItem: function (sKey, sValue) {
+      if(!sKey) { return; }
+      document.cookie = escape(sKey) + "=" + escape(sValue) + "; path=/";
+      this.length = document.cookie.match(/\=/g).length;
+    },
+
+    length: 0,
+
+    removeItem: function (sKey) {
+      if (!sKey || !this.hasOwnProperty(sKey)) { return; }
+      var sExpDate = new Date();
+      sExpDate.setDate(sExpDate.getDate() - 1);
+      document.cookie = escape(sKey) + "=; expires=" + sExpDate.toGMTString() + "; path=/";
+      this.length--;
+    },
+
+    hasOwnProperty: function (sKey) { return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie); }
+  };
+
+  window.localStorage.length = (document.cookie.match(/\=/g) || window.localStorage).length;
+}
+
+            // Define two global variables to store the data
+            var data = [];
+            var vocabulary = [];
+
+            // Copy & Paste
+
+function getSelectionBoundary(el, start) {
+    var property = start ? "selectionStart" : "selectionEnd";
+    var originalValue, textInputRange, precedingRange, pos, bookmark, isAtEnd;
+
+    if (typeof el[property] == "number") {
+        return el[property];
+    } else if (document.selection && document.selection.createRange) {
+        el.focus();
+
+        var range = document.selection.createRange();
+        if (range) {
+            // Collapse the selected range if the selection is not a caret
+            if (document.selection.type == "Text") {
+                range.collapse(!!start);
+            }
+
+            originalValue = el.value;
+            textInputRange = el.createTextRange();
+            precedingRange = el.createTextRange();
+            pos = 0;
+
+            bookmark = range.getBookmark();
+            textInputRange.moveToBookmark(bookmark);
+
+            if (/[\r\n]/.test(originalValue)) {
+                // Trickier case where input value contains line breaks
+
+                // Test whether the selection range is at the end of the
+                // text input by moving it on by one character and
+                // checking if it's still within the text input.
+                try {
+                    range.move("character", 1);
+                    isAtEnd = (range.parentElement() != el);
+                } catch (ex) {
+                    log.warn("Error moving range", ex);
+                    isAtEnd = true;
+                }
+                range.moveToBookmark(bookmark);
+
+                if (isAtEnd) {
+                    pos = originalValue.length;
+                } else {
+                    // Insert a character in the text input range and use
+                    // that as a marker
+                    textInputRange.text = " ";
+                    precedingRange.setEndPoint("EndToStart", textInputRange);
+                    pos = precedingRange.text.length - 1;
+
+                    // Delete the inserted character
+                    textInputRange.moveStart("character", -1);
+                    textInputRange.text = "";
+                }
+            } else {
+                // Easier case where input value contains no line breaks
+                precedingRange.setEndPoint("EndToStart", textInputRange);
+                pos = precedingRange.text.length;
+            }
+            return pos;
+        }
+    }
+    return 0;
+}
+
+function getTextAreaSelection(textarea) {
+    var start = getSelectionBoundary(textarea, true),
+        end = getSelectionBoundary(textarea, false);
+
+    return {
+        start: start,
+        end: end,
+        length: end - start,
+        text: textarea.value.slice(start, end)
+    };
+}
+
+function detectPaste(textarea, callback) {
+    textarea.onpaste = function () {
+        var sel = getTextAreaSelection(textarea);
+        var initialLength = textarea.value.length;
+        window.setTimeout(function () {
+            var val = textarea.value;
+            var pastedTextLength = val.length - (initialLength - sel.length);
+            var end = sel.start + pastedTextLength;
+            callback({
+                start: sel.start,
+                end: end,
+                length: pastedTextLength,
+                text: val.slice(sel.start, end),
+                replacedText: sel.text
+            });
+        }, 1);
+    };
+}
+
+
+
+window.onload = function () {
+    var textarea = document.getElementById("importer");
+    detectPaste(textarea, function (pasteInfo) {
+        var val = textarea.value;
+        var keyval = document.getElementById("importer").value.split(/[\r\n]/);
+        if (!(/\d/.test(keyval))) {
+                for (var index = 0; index < keyval.length; index++) {
+                    var temp = keyval[index].split('=');
+                    vocabulary.push({"key": temp[0].trim(), "value": temp[1].trim()});
+                }
+                /*for (var index = 0; index < vocabulary.length; index++) {
+                    console.log(vocabulary[index]);
+                }*/
+               sessionStorage.setItem('dataLangue', JSON.stringify(vocabulary));
+            alert("Your Vocabulary Knowledge Have Been Saved!");
+        } else {
+            for (var index = 0; index < keyval.length; index++) {
+                var temp = keyval[index].split('=');
+                data.push({"key": temp[0].trim(), "value": temp[1].trim()});
+            }
+            sessionStorage.setItem('dataMath', JSON.stringify(data));
+            /*for (var index = 0; index < data.length; index++) {
+                console.log(data[index]);
+            }*/
+            
+            alert("Your Math Equations Have Been Saved!");
+        }
+
+    });
+};
+        </script>
+
+        
+    </head>
+    
+    <body>
+        <!-- Page Container -->
+        <div id="container">
+            <!-- Header -->
+            <header>
+                <!-- Logo -->
+                <div id="logo">
+                    <h1>Knowledge Fighter</h1>
+                </div>
+                <!-- Navigation -->
+                <nav>
+                    <ul>
+                        <li>
+                            <a href="test.html" title="Knowledge Fighter" class="active">Home</a>
+                        </li>
+                        <li>
+                            <a href="about.html" title="About Page of Knowledge Fighter">About</a>
+                        </li>
+                    </ul>
+                </nav>
+            </header>
+            <!-- Main Content -->
+            
+            <body>
+                <div>
+                    <!-- Feature -->
+                    <section id="feature">
+                    <p>Paste your knowledge in the following Textarea</p>
+                        <textarea id="importer" placeholder="Import Data from Here!"
+                        autofocus required></textarea>
+                    </section>
+                    <!-- Space Invader -->
+                    <section id="home-text">
+                        <a href="invader.html" class="myButton2">Save The Universe</a>
+                    </section>
+                    <!-- Maze -->
+                    <section id="offers">
+                        <a href="pacman.html" class="myButton1">Find Your Way Out Of Maze</a>
+                    </section>
+                </div>
+                <!-- Footer -->
+                <footer>Shuo YAN University of Geneva 2015, supervised by Prof. Martin Gander & Prof. Pierre-Alain Cherix</footer>
+        </div>
+        </body>
+
+</html>

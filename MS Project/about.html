@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+	<title>About Page</title>
+  <meta name="description" content="This is the About Page of the Multiple-Data Game">
+  <meta name="keywords" content="Data Importer, Space Invader, Maze Game">
+  <meta name="author" content="Shuo YAN">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    var restoredData = JSON.parse(sessionStorage.getItem('dataMath'));
+    console.log(restoredData);
+    var restoredVocabulary = JSON.parse(sessionStorage.getItem('dataLangue'));
+    console.log(restoredVocabulary);  </script>
+</head>
+<body>
+   <!-- Page Container -->
+   <div id="container">
+   	  <!-- Header -->
+      <header>
+      	<!-- Logo -->
+        <div id="logo"><h1>Knowledge Fighter</h1></div>
+        <!-- Navigation -->
+         <nav>
+           <ul>
+               <li><a href="test.html" title="Knowledge Fighter" class="active">Home</a></li>
+           </ul>
+         </nav>
+      </header>
+      <!-- Main Content -->
+      <div>
+        <!-- Page Text -->
+        <section id="page-text">
+          This application is part of a master project proposed by Prof. Martin Gander & Prof. Pierre-Alain Cherix from the Mathematics Department of University of Geneva. The aim of this project is to free players from using predefined data embedded by game designer. We introduce a knowledge importer which allows players to enter their own data and then the game interface will use these user-defined data in the game.
+        </section>
+      </div>
+      <!-- Footer -->
+      <footer>
+            Shuo YAN 2015, supervised by Prof. Martin Gander & Prof. Pierre-Alain Cherix
+      </footer>
+   </div> 
+</body>
+</html>

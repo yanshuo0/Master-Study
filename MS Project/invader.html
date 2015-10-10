@@ -1,0 +1,577 @@
+<html>
+    
+    <head>
+        <title>Knowledge Invader</title>
+        <script langage="JavaScript">
+            // =======================================================================================
+             //document.domain = "test.html";
+            // Check whether the broswer supports localStorage/sessionStorage
+            if (!window.localStorage) {
+              window.localStorage = {
+                getItem: function (sKey) {
+                  if (!sKey || !this.hasOwnProperty(sKey)) { return null; }
+                  return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+                },
+                key: function (nKeyId) { return unescape(document.cookie.replace(/\s*\=(?:.(?!;))*$/, "").split(/\s*\=(?:[^;](?!;))*[^;]?;\s*/)[nKeyId]); },
+                setItem: function (sKey, sValue) {
+                  if(!sKey) { return; }
+                  document.cookie = escape(sKey) + "=" + escape(sValue) + "; path=/";
+                  this.length = document.cookie.match(/\=/g).length;
+                },
+                length: 0,
+                removeItem: function (sKey) {
+                  if (!sKey || !this.hasOwnProperty(sKey)) { return; }
+                  var sExpDate = new Date();
+                  sExpDate.setDate(sExpDate.getDate() - 1);
+                  document.cookie = escape(sKey) + "=; expires=" + sExpDate.toGMTString() + "; path=/";
+                  this.length--;
+                },
+                hasOwnProperty: function (sKey) { return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie); }
+              };
+              window.localStorage.length = (document.cookie.match(/\=/g) || window.localStorage).length;
+            }
+            
+            // Read the stored knowledge in the knowledge importer
+            var restoredData = JSON.parse(sessionStorage.getItem('dataMath'));
+            var restoredVocabulary = JSON.parse(sessionStorage.getItem('dataLangue'));
+            
+            
+                    function tellerror(msg, url, linenumber) {
+            //========================================
+            // For netscape and mozilla
+            // Alert the error type, display when the error happens and the line that error locates.
+                        alert('Error message= ' + msg + '\nURL= ' + url + '\nLine Number= ' + linenumber);
+                        return true;
+                    } // tellerror
+            
+                    if (document.addEventListener) window.onerror=tellerror;  // If not, use IE
+            
+                    // Constant Definition
+                    cteTopPosY = -20;  // position that knowledge displays from above.
+                    cteInfoDeltaY = -35; // position that knowledge end at the bottom of screen
+            
+                    // variables storing the positions and contenu of knowledge.
+                    if (restoredData!=null) {
+                        var anNbPosX = new Array(restoredData.length);
+                        var anNbPosY = new Array(restoredData.length);
+                        var anNbKey = new Array(restoredData.length);
+                        var anNbValue = new Array(restoredData.length);
+                    } else {
+                        var anNbPosX = new Array(restoredVocabulary.length);
+                        var anNbPosY = new Array(restoredVocabulary.length);
+                        var anNbKey = new Array(restoredVocabulary.length);
+                        var anNbValue = new Array(restoredVocabulary.length);
+                    }
+                    
+                   // var anNbVal1  = new Array(50); // Value of first number
+                   // var anNbVal2  = new Array(50); // Value of second number
+                   // var anNbValue = new Array(50); // value of product of two numbers
+                    var nMouseValue = 0; // Correct answer that displayed on mouse
+            
+                    var nNbIndex = 0;  // Count of numbers that fall
+            
+                    var nNbAtBottom = 0; // Count of numbers that reach bottom of screen
+                    var nNbWrong  = 0; // Count of numbers answering wrong
+                    var nNbCorrect = 0; // Count of numbers answering correct
+                    var nTimes   = 0; // time in unit of 1/10 second
+                   // var nOper = 4;    // Definition of operations (1 = '+';  2 = '-';  4 = '*';  8 = '/')
+            
+                    var nTimerID = 0;
+                    var nPixLimitBottom = 530;  // limit of bottom of the screen
+            
+                    var nTime = 0; // For vary the speed of numbers
+                    var nDeltaTime = 100; // Speed. 100 = normal, 50 = half speed, 200 = double speed.
+            
+                    //var nNbMin1 =  2; // The minimum limit of randomly generated first number
+                    //var nNbMax1 = 11; // The maximum limit of randomly generated first number
+                    //var nNbMin2 =  2; // The minimum limit of randomly generated second number
+                    //var nNbMax2 = 11; // The maximum limit of randomly generated second number
+            
+                    var nOptErr = 1; // Importance of error.           
+                    function myRightMouseDown(evt) { // For opera .
+            //============================
+                        var MyNumber=0;
+                        if (evt) MyNumber = evt.button;
+                        else     MyNumber = event.which;
+            
+                        if ((MyNumber == 2) || (MyNumber == 3))  {
+                           alert("Right button is inactive");
+                           evt.preventBubble();    // Cannot function
+                           evt.stopPropagation();  // Cannot function
+                           // if (evt)  evt.preventDefault();  // It works !!!  Work for Netscape 6+
+                        }
+                        return false;
+                    } // myRightMouseDown
+            
+                    function myContextMenu(evt) { // For netscape 6+ and IE but no opera .
+            //===========================
+            // Cancel the context menu.
+                        if (evt)  evt.preventDefault();  // It works for Netscape
+            
+                        return false;
+                    } // myContextMenu
+            
+            // =====================================================================================================================
+                    function Termine() {
+            //================
+            // When a number arrives at the bottom of the screen, displays a resume of results.
+            
+                        if (nTimerID != 0) {
+                            clearInterval(nTimerID);
+                            nTimerID = 0;
+                        }
+            
+                        var oDivS = document.getElementById("divMouse_follow");
+                        oDivS.innerHTML = "";
+            
+                        var oDivTerm = document.getElementById("divEnd");
+                        oDivTerm.innerHTML = '<table width="400" border="1">' +
+                                '<tr><td bgcolor="#000099"><font size="+1"; color="#ffff90">' +
+                                'Termine apr&egrave;s : ' + nTimes/10 + ' secondes<br>' +
+                                'Count of correct answers = ' + nNbCorrect + '<br>' +
+                                'Count of incorrect answers = ' + nNbAtBottom + '<br>' +
+                                'Average time of correct answers = ' +
+                                Math.round(10*nTimes/(nNbCorrect + 0.00001)) / 100 + ' [s]' +
+                                '</td></tr></table>';
+            
+            // decide whether to display the commentaries
+                        if ((document.MaForm1.showComment.selectedIndex == 0) || (nTimes < 300)) return;
+            
+            // write commentaries, in terms of result
+                        var strCom1 = "Less than 2 minutes,";
+            var strCom2 = "It's not enough.";
+            var strCom3 = "";
+            var strCom4 = "";
+
+            if (nTime > 1200) {
+                strCom1 = "Less than 2 minutes 30,";
+                strCom2 = "Train to improve yourself.";
+            }
+            if (nTime > 1500) {
+                strCom1 = "More than 2 minutes 30,";
+                strCom2 = "It;s a great start.";
+            }
+            if (nTime > 1800) {
+                strCom1 = "More than 3 minutes,";
+                strCom2 = "It's quite well.";
+            }
+            if (nTime > 2100) {
+                strCom1 = "More than 3 minutes 30,";
+                strCom2 = "Good job.";
+            }
+            if (nTime > 2400) {
+                strCom1 = "More than 4 minutes,";
+                strCom2 = "Well done, you are an expert!";
+            }
+            if (nTime > 3000) {
+                strCom1 = "More than 5 minutes, bravo,";
+                strCom2 = "You are a guru!";
+            }
+            if (nTime > 3600) {
+                strCom1 = "More than 6 minutes,";
+                strCom2 = "You are one of the top!";
+            }
+            if (nTime > 4200) {
+                strCom1 = "More than 7 minutes,";   
+                strCom2 = "Incredible!";
+            }
+            if (nNbCorrect > 17) {
+                if (nNbWrong == 0) strCom3 = "Perfect !";
+                if (nNbWrong == 1) strCom3 = "1 error, it's acceptable !";
+                if (nNbWrong == 2) strCom3 = "2 errors, that's the limit !";
+                if (nNbWrong >  2) strCom3 = "More than 2 errors, that's too much !";
+                if (nNbWrong >  5) strCom3 = "More than 5 errors, that's a tragedy !";
+                if (nNbWrong > 10) strCom3 = "No comments...";
+
+                if (nNbCorrect >  50) strCom4 = "You have conquered 50 questions.";
+                if ((nNbCorrect >  60) && (nNbWrong < 3)) strCom4 = "60 correct answers, great.";
+                if ((nNbCorrect >  70) && (nNbWrong < 3)) strCom4 = "70 correct answers, really good.";
+                if ((nNbCorrect >  80) && (nNbWrong < 3)) strCom4 = "80 correct answers, excellent.";
+                if ((nNbCorrect >  90) && (nNbWrong < 2)) strCom4 = "90 correct answers, remarkable.";
+                if ((nNbCorrect > 100) && (nNbWrong == 0)) strCom4 = "100 questions done! Hello, expert.";
+            }
+            
+                        var oDivCom = document.getElementById("divCommentaires");
+                        oDivCom.innerHTML = '<table width="400" border="1">' +
+                                '<tr><td bgcolor="#009999"><font size="+1"; color="#ffff90">' +
+                                strCom1 + '<br>' +
+                                strCom2 + '<br>' +
+                                strCom3 + '<br>' +
+                                strCom4 + '<br>' +
+                                '</td></tr></table>';
+            
+            
+                    } // Termine
+            
+                    function DisplayInfo() {
+            //====================
+            // display information at the bottom of screen
+                        oDivInfo = document.getElementById("divInfo");
+                        oDivInfo.innerHTML = "Correct : " + nNbCorrect + " &nbsp; &nbsp; Incorrect : " + nNbWrong +
+                                " &nbsp; &nbsp; Average : " + Math.round(10*nTimes/(nNbCorrect + 0.00001)) / 100 +
+                                " &nbsp; &nbsp; Time : ";
+                    } // DisplayInfo
+            
+                    function myWrite() {
+            //==================
+            // move numbers to the bottom
+                        nTimes += 1; // plus 1/10 second
+                        odivTime = document.getElementById("divTime");
+                        odivTime.innerHTML = nTimes/10;
+            
+                        nTime = nTime + nDeltaTime;
+                        if (nTime < 0) return true;
+            
+                        var nDeltaY = 0;
+                        while (nTime >= 0) { // accelerate the speed.
+                            nTime = nTime - 100;
+                            nDeltaY +=3;
+                        }
+            
+                        for (nn=1; nn <=nNbIndex; nn++) {
+                            oDivNb = document.getElementById("divNb" + nn);
+                            anNbPosY[nn] += nDeltaY;
+                            anNbPosX[nn] += Math.round(10*(Math.random()-0.5));  // move randomly in axe X
+                            oDivNb.style.left = anNbPosX[nn];
+                            oDivNb.style.top  = anNbPosY[nn];
+            
+                            if (anNbPosY[nn] > nPixLimitBottom) {
+                                // This number has arrived at the bottom
+                                anNbPosX[nn] = 80*nn-40; // regeneration in the right column
+                                anNbPosY[nn] = cteTopPosY; // regenerate from above screen
+                                nNbAtBottom +=1; // count "arrive at bottom" increases 1
+            
+                                DisplayInfo();
+                                Termine();
+                            }
+                        }
+            
+                    } // myWrite
+            
+                    function Mouse_follow(evt) {
+            //=======================
+                        if (nTimerID == 0) return true;
+            
+                        var oDivS = document.getElementById("divMouse_follow");
+                        var x = 0; var y = 0;
+                        var myString = [];
+            
+            // Read the position of mouse
+                        if (evt) { x=evt.clientX; y=evt.clientY; } // in netscape 6
+                        else if (window.event){ x=window.event.x; y=window.event.y; } // in IE5
+            
+            // move the text(equation) to follow the move of mouse
+                        oDivS.style.top  = y;
+                        oDivS.style.left = x;
+            
+                    } // Mouse_follow
+            
+                    function Click_action(evt) {
+            //==========================
+            // action of click the mouse.
+                        if (nTimerID == 0) return true;
+            
+                        var x = 0; var y = 0;
+            
+            // Read the position of mouse
+                        if (evt) { x=evt.clientX; y=evt.clientY; } // In ns6
+                        else if (window.event){ x=window.event.x; y=window.event.y; } // In ie5
+            
+            // For each correct response, we test the size of window.
+                        if (window.innerHeight) nPixLimitBottom = window.innerHeight;
+                        else if (document.body && document.body.clientHeight) nPixLimitBottom = document.body.clientHeight;
+                        else nPixLimitBottom = 500;
+            
+                        oDivInfo = document.getElementById("divInfo");
+                        oDivInfo.style.top = nPixLimitBottom + cteInfoDeltaY;
+                        odivTime = document.getElementById("divTime");
+                        odivTime .style.top = nPixLimitBottom + cteInfoDeltaY;
+            
+            // We let the test run faster
+                        if ((x < 3) && (y < 15)) {
+                            nTimes+=1200 - 100*y;
+                            nNbCorrect +=5 * y;
+                            for (kk=1; kk <=nNbIndex; kk++) {
+                                anNbPosY[kk] += 50;
+                                oDivLeNb = document.getElementById("divNb" + kk);
+                                oDivLeNb.style.top = anNbPosY[kk];
+                            }
+                            DisplayInfo();
+                            return;
+                        }
+            
+            // For all the numners, test whether the user click on a number
+                        for (nn=1; nn <=nNbIndex; nn++) {
+                            // Test whether a number is clicked
+                            if ((Math.abs(x-anNbPosX[nn]- 25) < 25) && (Math.abs(y-anNbPosY[nn]- 25) < 25)) {
+            
+                                // Test whether a correct number is clicked
+                                if (nMouseValue == anNbValue[nn]) { // correct answer
+                                    nNbCorrect +=1;
+            
+                                    // change the text on the mouse
+                                    var oDivS = document.getElementById("divMouse_follow");
+            
+                                    anNbPosY[nn] = cteTopPosY; // reset the number from above
+            
+                                    // Choose a random number.
+                                    var kk = Math.floor(1+nNbIndex *Math.random());
+            
+                                    if (nTimes + nOptErr*nNbWrong*(50 + 10*nNbWrong) < 2100) {
+                                        // If less than 2100 1/10 seconds = 3.5 minutes, then
+                                        // choose one from the lowest two.
+                                        var kk1 = Math.floor(1+nNbIndex *Math.random());
+                                        if (anNbPosY[kk1] > anNbPosY[kk]) kk = kk1;
+                                    }
+            
+                                    if ((nNbIndex > 7) && (nTimes + nOptErr*nNbWrong*(30 + 5*nNbWrong) < 1500)) {
+                                        // If it is more than 7 numbers but less than 1500 1/10 seconds,
+                                        // we give more weight to the lowest one.
+                                        kk1 = Math.floor(1+nNbIndex *Math.random());
+                                        if (anNbPosY[kk1] > anNbPosY[kk]) kk = kk1;
+                                    }
+  
+                                    // New question
+                                    var nData = Math.floor(1+nNbIndex * Math.random());
+                                    if (restoredData!=null) {
+                                        anNbKey[nn] = restoredData[nData]['key'];
+                                        anNbValue[nn] = restoredData[nData]['value'];
+                                    } else {
+                                        anNbKey[nn] = restoredVocabulary[nData]['key'];
+                                        anNbValue[nn] = restoredVocabulary[nData]['value'];
+                                    }
+                                    
+                                    oDivS.innerHTML = anNbKey[kk];
+            
+                                    nMouseValue = anNbValue[kk];
+            
+                                    anNbPosX[nn] = 80*nn-40; // reset in the right column
+                                    anNbPosY[nn] = cteTopPosY; // reset the number from above
+                                    oDivLeNb = document.getElementById("divNb" + nn);
+                                    oDivLeNb.innerHTML = anNbValue[nn];
+                                    oDivLeNb.style.top = anNbPosY[nn];
+            
+                                    // increase the count of number with time.
+                                    var nTimes2  = nTimes + 30*nOptErr*nNbWrong;
+                                    if (((nTimes2 >  150) && (nNbIndex <  5)) ||
+                                            ((nTimes2 >  300) && (nNbIndex <  6)) ||
+                                            ((nTimes2 >  450) && (nNbIndex <  7)) ||
+                                            ((nTimes2 >  600) && (nNbIndex <  8)) ||
+                                            ((nTimes2 >  750) && (nNbIndex <  9)) ||
+                                            ((nTimes2 >  900) && (nNbIndex < 10)) ||
+                                            ((nTimes2 > 1200) && (nNbIndex < 11))) {
+                                        nNbIndex = nNbIndex +1;
+                                        nn = nNbIndex;
+                                        if (restoredData!=null) {
+                                        anNbKey[nn] = restoredData[(nn%restoredData.length) - 1]['key'];
+                                        anNbValue[nn] = restoredData[(nn%restoredData.length) - 1]['value'];
+                                    } else {
+                                        anNbKey[nn] = restoredVocabulary[(nn%restoredVocabulary.length) - 1]['key'];
+                                        anNbValue[nn] = restoredVocabulary[(nn%restoredVocabulary.length) - 1]['value'];
+                                    }
+            
+                                        anNbPosX[nn] = 150*nn-40;
+                                        anNbPosY[nn] = -10;
+                                        strDivText = "<DIV id='divNb" + nn + "' STYLE='position:absolute; left:" + anNbPosX[nn] + "; top:" + anNbPosY[nn];
+                                        strDivText +="; color:white; font-size:36; visibility:visible'>" + anNbValue[nn] + "</DIV>";
+            
+                                        var oDivNb = document.getElementById("divNumbers");
+                                        oDivNb.innerHTML += strDivText;
+                                    }
+            
+                                    DisplayInfo();
+                                    return;
+                                }
+                                else {  // incorrect answer
+                                    nNbWrong +=1;
+                                    if (nOptErr == 0) {
+                                        // the number clicked down a little
+                                        anNbPosY[nn] += 50;
+                                        oDivLeNb = document.getElementById("divNb" + nn);
+                                        oDivLeNb.style.top = anNbPosY[nn];
+                                    }
+                                    else {
+                                        // the numbers clicked down a little
+                                        for (kk=1; kk <=nNbIndex; kk++) {
+                                            anNbPosY[kk] += 50;
+                                            oDivLeNb = document.getElementById("divNb" + kk);
+                                            oDivLeNb.style.top = anNbPosY[kk];
+                                        }
+                                    }
+                                    DisplayInfo();
+                                    return;
+                                }
+                            }
+                        }
+                    } // Click_action
+            
+                    function Start() {
+            //================
+                        var nn = 1;
+                        var strDivText = "du texte";
+                        var oDivNb = document.getElementById("divNumbers");
+                        oDivNb.innerHTML = '';
+                        nNbIndex = 4;
+            
+                        nNbAtBottom = 0; // count of numbers arrive at the bottom
+                        nNbWrong  = 0; // count of incorrect answers
+                        nNbCorrect = 0; // count of correct answers
+                        nTimes   = 0; // time in 1/10 seconds
+            
+                        for (nn=1; nn <= nNbIndex ; nn++) {
+                        	nData = Math.floor(1+nNbIndex * Math.random());
+                              if (restoredData!=null) {
+                                        anNbKey[nn] = restoredData[nData]['key'];
+                                        anNbValue[nn] = restoredData[nData]['value'];
+                                    } else if (restoredVocabulary!=null) {
+                                        anNbKey[nn] = restoredVocabulary[nData]['key'];
+                                        anNbValue[nn] = restoredVocabulary[nData]['value'];
+                                    } else {
+                                    	alert("No game data imported");
+                                    }
+            
+                            anNbPosX[nn] = 80*nn-40;
+                            anNbPosY[nn] = -10;
+                            strDivText = "<DIV id='divNb" + nn + "' STYLE='position:absolute; left:" + anNbPosX[nn] + "; top:" + anNbPosY[nn];
+                            strDivText +="; color:white; font-size:36; visibility:visible'>" + anNbValue[nn] + "</DIV>";
+            
+                            oDivNb.innerHTML += strDivText;
+                        }
+            
+            // operation to do, which follows the mouse
+                        var oDivS = document.getElementById("divMouse_follow");
+            
+                        kk = Math.floor(1+nNbIndex * Math.random());
+                       
+                        oDivS.innerHTML = anNbKey[kk];
+            
+                        nMouseValue = anNbValue[kk];
+            
+            // position of the informations, in function of the window size
+                        if (window.innerHeight) nPixLimitBottom = window.innerHeight;
+                        else if (document.body && document.body.clientHeight) nPixLimitBottom = document.body.clientHeight;
+                        else nPixLimitBottom = 500;
+            
+            // Informations at bottom
+                        oDivInfo = document.getElementById("divInfo");
+                        oDivInfo.style.top = nPixLimitBottom + cteInfoDeltaY;
+                        DisplayInfo();
+            
+                        odivTime = document.getElementById("divTime");
+                        odivTime .style.top = nPixLimitBottom + cteInfoDeltaY;
+            
+            // Move numbers every '100' millisecondes.
+                        if (nTimerID == 0) nTimerID = setInterval("myWrite()", 100);
+            
+                        var oDivTerm = document.getElementById("divEnd");
+                        oDivTerm.innerHTML = "";
+            
+                        var oDivCom = document.getElementById("divCommentaires");
+                        oDivCom.innerHTML = "";
+            
+                    } // Start
+            
+                    function SetOption(strOption) {
+            //=============================
+            // Options to be tested
+                        if (strOption == 'opt') {
+                            // hide the button "options" while display other buttons
+                            oDivOptions = document.getElementById("divOptionsShow");
+                            oDivOptions.style.visibility = "hidden";
+            
+                            oDivOptions = document.getElementById("divOptions");
+                            oDivOptions.style.visibility = "visible";
+            
+                            Termine();
+                            return;
+                        }
+                        else {
+                            // show the "option" button and hide other buttons.
+                            oDivOptions = document.getElementById("divOptionsShow");
+                            oDivOptions.style.visibility = "visible";
+            
+                            oDivOptions = document.getElementById("divOptions");
+                            oDivOptions.style.visibility = "hidden";
+                        }
+            
+            
+            // choose the importance of error.
+                        if (document.MaForm1.ErrorImportance.selectedIndex == 0) {nOptErr = 0; }
+                        if (document.MaForm1.ErrorImportance.selectedIndex == 1) {nOptErr = 1; }
+                        if (document.MaForm1.ErrorImportance.selectedIndex == 2) {nOptErr = 2; }
+            //alert('Opt= ' + nOptErr + '   ' + nOptErr2 + '   ' +document.MaForm1.ErrorImportance.selectedIndex);
+                        Start();
+                    } // SetOption
+
+            
+                    // Initialisation
+                    //=============================
+                    if (document.addEventListener) { // Netscape 6+  &  Opera
+                        document.addEventListener('mousemove', Mouse_follow, true);
+                        document.addEventListener('click', Click_action, true);
+                        document.addEventListener("mousedown",myRightMouseDown,false); // For opera
+                        document.addEventListener("contextmenu", myContextMenu, false);
+                    }
+                    else { // IE
+                        document.onmousemove = Mouse_follow;
+                        document.onclick = Click_action;
+                        document.oncontextmenu = myContextMenu;  // Works Well
+                    }
+            
+                    //-->
+        </script>
+    </head>
+    
+    <body style="background-color:#333366">
+        <p>
+            <font size="6">
+                <b>Knowledge Invader</b>
+            </font>.
+            <br>
+        </p>
+        <div id="divMouse_follow" STYLE='position:absolute; left:100; top:1; z-index:2; color:#eeee00; font-size:36pt; font-family:arial;'>19</div>
+        <DIV id="divNumbers" STYLE='position:absolute; left:0; top:0; visibility:hidden'>Columns of numbers</DIV>
+        <div id="divInfo" STYLE='position:absolute; left:5; top:570; z-index:5; color:#ffff44; font-size:20pt; font-family:arial;'>Informations</div>
+        <div id="divTime" STYLE='position:absolute; left:660; top:570; z-index:6; color:#ffff88; font-size:20pt; font-family:arial;'>Time</div>
+        <div id="divEnd" STYLE='position:absolute; left:100; top:150; z-index:6; color:#ffff88; font-size:16pt; font-family:arial;'></div>
+        <div id="divCommentaires" STYLE='position:absolute; left:100; top:280; z-index:6; color:#ffff88; font-size:16pt; font-family:arial;'></div>
+        <div id="divOptions" STYLE='position:absolute; left:550; top:10; z-index:7; color:#ff8888; font-size:16pt; font-family:arial;'>
+            <FORM name="MaForm1">
+                Go back to game
+                <INPUT TYPE="button" value="Back" onclick="SetOption('hide')" STYLE='font-size:16pt; font-family:arial; font-weight:bold;'><br>
+<br>
+                <br>Importance of error :
+                <SELECT name="ErrorImportance">
+                    <option>Weak</option>
+                    <option>Average</option>
+                    <option>Strong</option>
+                </select>
+                <br>
+                <br>
+                <SELECT name="showComment">
+                    <option>No</option>
+                    <option>Yes</option>
+                </select>Display Comments
+                <br>
+            </FORM>
+        </div>
+        <div id="divOptionsShow" STYLE='position:absolute; left:870; top:10; z-index:8; color:#ff8888; font-size:16pt; font-family:arial;'>
+            <FORM name="MaForm2">
+                <INPUT TYPE="button" value="Options" onclick="SetOption('opt')" STYLE='font-size:16pt; font-family:arial; font-weight:bold;'>
+                <br>
+            </FORM>
+        </div>
+        <br>
+        <script language="JavaScript">
+            //Texte : <INPUT TYPE="text" NAME="UnText" size="40" value="" STYLE='color:#000000; background:#ffffff; font-size:16pt; font-family:arial; font-weight:bold;'> &nbsp; &nbsp;
+        
+            oDivOptions = document.getElementById("divOptions");
+            oDivOptions.style.visibility = "hidden";
+            document.MaForm1.ErrorImportance.selectedIndex = 2;
+            document.MaForm1.showComment.selectedIndex = 1;
+        
+            Start();
+        </script>
+    </body>
+
+</html>

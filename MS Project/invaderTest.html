@@ -1,0 +1,59 @@
+<html>
+<head>
+    <title>Knowledge Invader</title>
+    <script type="text/javascript" src="app2.js"></script>
+</head>
+
+<body bgcolor="#100000">
+<p><font size="6"><b>Knowledge Invader</b></font>.<br></p>
+
+<div id="mouse_follow" STYLE='position:absolute; left:100; top:1; z-index:2; color:#eeee00; font-size:36pt; font-family:arial;'>19</div>
+
+<DIV id="divAllNumbers" STYLE='position:absolute; left:0; top:0; visibility:hidden'>Columns of numbers</DIV>
+
+<div id="divInfo" STYLE='position:absolute; left:5; top:570; z-index:5; color:#ffff44; font-size:20pt; font-family:arial;'>Informations</div>
+
+<div id="divTime" STYLE='position:absolute; left:660; top:570; z-index:6; color:#ffff88; font-size:20pt; font-family:arial;'>Time</div>
+
+<div id="divTime" STYLE='position:absolute; left:100; top:150; z-index:6; color:#ffff88; font-size:16pt; font-family:arial;'></div>
+
+<div id="divCommentaires" STYLE='position:absolute; left:100; top:280; z-index:6; color:#ffff88; font-size:16pt; font-family:arial;'></div>
+
+<div id="divOptions" STYLE='position:absolute; left:550; top:10; z-index:7; color:#ff8888; font-size:16pt; font-family:arial;'>
+    <FORM name="MaForm1">
+        Importance of error :
+        <SELECT name="Choose Error Importance">
+            <option>Weak</option>
+            <option>Average</option>
+            <option>Strong</option>
+        </select>
+        <br>
+        <br>
+        <SELECT name="Commentary Display Option">
+            <option>No</option>
+            <option>Yes</option>
+        </select>
+        Display Comments
+        <br>
+    </FORM>
+</div>
+
+<div id="divOptionsShow" STYLE='position:absolute; left:870; top:10; z-index:8; color:#ff8888; font-size:16pt; font-family:arial;'>
+    <FORM name="MaForm2">
+        <INPUT TYPE="button" value="Options" onclick="SetOption('opt')" STYLE='font-size:16pt; font-family:arial; font-weight:bold;'><br>
+    </FORM>
+</div>
+
+<script language="JavaScript">
+    //Texte : <INPUT TYPE="text" NAME="UnText" size="40" value="" STYLE='color:#000000; background:#ffffff; font-size:16pt; font-family:arial; font-weight:bold;'> &nbsp; &nbsp;
+
+    // oDivOptions = document.getElementById("divOptions");
+    // oDivOptions.style.visibility = "hidden";
+    //document.MaForm1.choix_erreurs.selectedIndex = 2;
+   // document.MaForm1.choix_commentaires.selectedIndex = 0;
+
+    // Start();
+</script>
+
+</body>
+</html>
