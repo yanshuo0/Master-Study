@@ -180,7 +180,7 @@ $(document).ready(function() {
     $("#saveNoteButton").on("click",function() {
 
         var title = $("#title").val();
-        var body = $("#body").val().split(/[,\r]/);
+        var body = $("#body").val().split(/[,\r\n]/);
         var key = $("#key").val();
 		var titlelc = title.toLowerCase();
 		

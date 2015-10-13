@@ -1,0 +1,7 @@
+### Master Project IndexedDB Programming Improvement Plan
+
+* Data has been saved in "body", the next step is to fetch it using the algorithm, the algorithm is activated by "Start Game". Therefore, I need to program a canvas who display the question(key), and an input box waiting for user input. The user input is received through keyboard. 
+
+* Another issue is to implement the algorithm that Prof. Martin and me figure out in the last meeting. The idea is to fetch data piece after piece, and once a question has been answered correctly for three times, it will be removed from the question list. The basic idea is that we need a loop to visit all data pieces in "body", and then, each correct answer will be added to a newly created array as "GoodAnswers". Define variable i as the counter of loop times. When i >= 3, we check if there is 3 same elements in the "GoodAnswer", if so, remove this question / answer pair from "body". The end condition for the loop is to give three incorrect answers. 
+
+* This implementation is far from optimum from the perspective of algorithm efficiency. It is calculated bounding. As for each loop of the algorithm, we need to check the "GoodAnswer" array. With the growing size of this array, the checking time is longer and longer. 
